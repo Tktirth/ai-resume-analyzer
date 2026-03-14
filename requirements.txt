@@ -1,0 +1,10 @@
+streamlit
+pdfplumber
+spacy
+scikit-learn
+sentence-transformers
+matplotlib
+plotly
+reportlab
+transformers
+torch
