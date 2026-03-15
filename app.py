@@ -1,3 +1,4 @@
+# AI Resume Analyzer HR Dashboard Version
 import streamlit as st
 import pdfplumber
 import matplotlib.pyplot as plt
