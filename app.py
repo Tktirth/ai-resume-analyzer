@@ -145,7 +145,7 @@ def section_analysis(resume_text):
 if st.button("Analyze Resume"):
 
 
-    if uploaded_file is None or job_desc == "":
+   if uploaded_file is None:
         st.warning("Please upload resume and paste job description")
         st.stop()
 
