@@ -6,22 +6,18 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-# -----------------------------
-# Streamlit Page Config
-# -----------------------------
-
 st.set_page_config(page_title="AI Resume Analyzer", layout="wide")
 
 st.title("AI Resume Analyzer")
-st.markdown("HR-style resume screening system")
+st.subheader("HR Style Resume Screening System")
 
 
-# -----------------------------
-# Predefined Job Description
-# -----------------------------
+# -------------------------
+# JOB DESCRIPTION
+# -------------------------
 
 JOB_DESCRIPTION = """
-We are hiring a Junior AI/ML Engineer.
+Junior AI/ML Engineer
 
 Required Skills:
 Python
@@ -41,46 +37,42 @@ Data Analysis
 jd_text = JOB_DESCRIPTION.lower()
 
 
-# -----------------------------
-# Upload Resume
-# -----------------------------
-
-uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
-
-
-# -----------------------------
-# Skill Database
-# -----------------------------
+# -------------------------
+# SKILL DATABASE
+# -------------------------
 
 skills_db = [
 
-# programming
 "python","java","c++","javascript","sql",
 
-# ai/ml
-"machine learning","deep learning","nlp","tensorflow","pytorch","scikit learn",
+"machine learning","deep learning","nlp",
+"tensorflow","pytorch","scikit learn",
 
-# data
-"data analysis","pandas","numpy","statistics","data visualization",
+"data analysis","pandas","numpy",
+"statistics","data visualization",
 
-# cybersecurity
-"cyber security","network security","ethical hacking","penetration testing",
+"cyber security","network security",
+"ethical hacking",
 
-# cloud/devops
 "docker","kubernetes","aws","linux",
 
-# web
 "flask","fastapi","react","node",
 
-# tools
 "git","github","power bi","tableau"
 
 ]
 
 
-# -----------------------------
-# Extract Text From PDF
-# -----------------------------
+# -------------------------
+# UPLOAD RESUME
+# -------------------------
+
+uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
+
+
+# -------------------------
+# EXTRACT TEXT
+# -------------------------
 
 def extract_text(file):
 
@@ -90,17 +82,17 @@ def extract_text(file):
 
         for page in pdf.pages:
 
-            page_text = page.extract_text()
+            content = page.extract_text()
 
-            if page_text:
-                text += page_text
+            if content:
+                text += content
 
     return text.lower()
 
 
-# -----------------------------
-# Extract Skills
-# -----------------------------
+# -------------------------
+# EXTRACT SKILLS
+# -------------------------
 
 def extract_skills(text):
 
@@ -114,24 +106,24 @@ def extract_skills(text):
     return found
 
 
-# -----------------------------
-# ATS Similarity Score
-# -----------------------------
+# -------------------------
+# ATS SCORE
+# -------------------------
 
-def ats_score(resume, job):
+def ats_similarity(resume, jd):
 
     vectorizer = TfidfVectorizer(stop_words="english")
 
-    vectors = vectorizer.fit_transform([resume, job])
+    vectors = vectorizer.fit_transform([resume, jd])
 
     score = cosine_similarity(vectors[0:1], vectors[1:2])[0][0]
 
     return round(score * 100)
 
 
-# -----------------------------
-# Resume Section Analysis
-# -----------------------------
+# -------------------------
+# RESUME SECTION CHECK
+# -------------------------
 
 def section_analysis(text):
 
@@ -145,26 +137,27 @@ def section_analysis(text):
 
     }
 
-    results = {}
+    result = {}
 
     for name, keyword in sections.items():
 
         if keyword in text:
-            results[name] = "Present"
+            result[name] = 1
         else:
-            results[name] = "Missing"
+            result[name] = 0
 
-    return results
+    return result
 
 
-# -----------------------------
-# Analyze Button
-# -----------------------------
+# -------------------------
+# ANALYZE
+# -------------------------
 
 if st.button("Analyze Resume"):
 
     if uploaded_file is None:
-        st.warning("Please upload a resume first.")
+
+        st.warning("Upload a resume first")
         st.stop()
 
 
@@ -180,7 +173,7 @@ if st.button("Analyze Resume"):
 
         missing = list(set(jd_skills) - set(resume_skills))
 
-        similarity = ats_score(resume_text, jd_text)
+        ats_score = ats_similarity(resume_text, jd_text)
 
         sections = section_analysis(resume_text)
 
@@ -188,150 +181,173 @@ if st.button("Analyze Resume"):
     st.success("Analysis Complete")
 
 
-# -----------------------------
-# Metrics Dashboard
-# -----------------------------
+# -------------------------
+# DASHBOARD METRICS
+# -------------------------
 
-    col1, col2, col3 = st.columns(3)
+    col1,col2,col3 = st.columns(3)
 
-    with col1:
-        st.metric("ATS Score", f"{similarity}%")
+    col1.metric("ATS Score", f"{ats_score}%")
 
-    with col2:
-        st.metric("Matched Skills", len(matched))
+    col2.metric("Matched Skills", len(matched))
 
-    with col3:
-        st.metric("Missing Skills", len(missing))
+    col3.metric("Missing Skills", len(missing))
 
 
-# -----------------------------
-# Skills Display
-# -----------------------------
+# -------------------------
+# SKILL ANALYSIS
+# -------------------------
 
     st.subheader("Matched Skills")
 
-    if matched:
-        st.write(matched)
-    else:
-        st.write("No matching skills found.")
+    st.write(matched if matched else "No matched skills")
 
 
     st.subheader("Missing Skills")
 
-    if missing:
-        st.write(missing)
-    else:
-        st.write("No missing skills.")
+    st.write(missing if missing else "No missing skills")
 
 
-# -----------------------------
-# Resume Sections
-# -----------------------------
+# -------------------------
+# SECTION ANALYSIS
+# -------------------------
 
-    st.subheader("Resume Section Analysis")
+    st.subheader("Resume Sections")
+
+    section_names = list(sections.keys())
+
+    section_values = list(sections.values())
 
     st.write(sections)
 
 
-# -----------------------------
-# HR Feedback
-# -----------------------------
+# -------------------------
+# IMPROVEMENT ENGINE
+# -------------------------
 
-    st.subheader("HR Feedback")
+    st.subheader("Resume Improvement Suggestions")
 
-    feedback = []
+    improvements = []
 
-    if similarity < 40:
-        feedback.append("Resume poorly aligned with job description.")
+
+    if ats_score < 60:
+        improvements.append("Improve keyword alignment with job description")
+
 
     if missing:
-        feedback.append("Add missing skills relevant to the role.")
+        improvements.append("Add missing skills if you have experience")
 
-    if sections["Projects"] == "Missing":
-        feedback.append("Include real AI/ML projects.")
 
-    if sections["Experience"] == "Missing":
-        feedback.append("Add relevant work or internship experience.")
+    if sections["Projects"] == 0:
+        improvements.append("Add AI/ML projects with GitHub links")
 
-    if feedback:
-        for f in feedback:
-            st.write("•", f)
+
+    if sections["Experience"] == 0:
+        improvements.append("Add internship or relevant work experience")
+
+
+    if sections["Certifications"] == 0:
+        improvements.append("Add relevant certifications (AWS, ML, etc)")
+
+
+    if improvements:
+
+        for item in improvements:
+            st.write("•", item)
+
     else:
-        st.write("Resume is well aligned with job requirements.")
+        st.write("Resume looks strong for this role")
 
 
-# -----------------------------
-# Hiring Recommendation
-# -----------------------------
+# -------------------------
+# HIRING DECISION
+# -------------------------
 
-    st.subheader("Hiring Recommendation")
+    st.subheader("HR Recommendation")
 
-    if similarity > 70:
+    if ats_score > 70:
         st.success("Strong Candidate")
 
-    elif similarity > 40:
+    elif ats_score > 45:
         st.info("Moderate Candidate")
 
     else:
-        st.error("Not Ready for Role")
+        st.error("Needs Improvement")
 
 
-# -----------------------------
-# Visualization: Skill Gap
-# -----------------------------
+# -------------------------
+# GRAPH 1 SKILL GAP
+# -------------------------
 
-    st.subheader("Skill Gap Analysis")
+    st.subheader("Skill Gap Graph")
 
-    labels = ["Matched", "Missing"]
+    labels = ["Matched Skills","Missing Skills"]
 
-    values = [len(matched), len(missing)]
+    values = [len(matched),len(missing)]
 
-    fig, ax = plt.subplots()
+    fig,ax = plt.subplots()
 
-    ax.bar(labels, values)
+    ax.bar(labels,values)
 
-    ax.set_ylabel("Skill Count")
+    ax.set_title("Skill Gap")
 
-    ax.set_title("Skill Match vs Missing")
+    ax.set_ylabel("Number of Skills")
 
     st.pyplot(fig)
 
 
-# -----------------------------
-# Visualization: ATS Score
-# -----------------------------
+# -------------------------
+# GRAPH 2 ATS SCORE
+# -------------------------
 
     st.subheader("ATS Score Visualization")
 
-    fig2, ax2 = plt.subplots()
+    fig2,ax2 = plt.subplots()
 
-    ax2.barh(["ATS Score"], [similarity])
+    ax2.barh(["ATS Score"],[ats_score])
 
     ax2.set_xlim(0,100)
 
-    ax2.set_xlabel("Score")
+    ax2.set_title("Resume Alignment")
 
     st.pyplot(fig2)
 
 
-# -----------------------------
-# Resume Skill Coverage
-# -----------------------------
+# -------------------------
+# GRAPH 3 SECTION COVERAGE
+# -------------------------
 
-    st.subheader("Resume Coverage")
+    st.subheader("Resume Section Coverage")
 
-    sizes = [len(matched), len(missing)]
+    fig3,ax3 = plt.subplots()
 
-    if sum(sizes) == 0:
+    ax3.bar(section_names,section_values)
 
-        st.warning("No skills detected in resume.")
+    ax3.set_ylim(0,1)
 
-    else:
+    ax3.set_title("Resume Structure")
 
-        fig3, ax3 = plt.subplots()
+    st.pyplot(fig3)
 
-        ax3.pie(sizes, labels=["Matched","Missing"], autopct="%1.1f%%")
 
-        ax3.set_title("Skill Coverage")
+# -------------------------
+# GRAPH 4 IMPROVEMENT PRIORITY
+# -------------------------
 
-        st.pyplot(fig3)
+    st.subheader("Improvement Priority")
+
+    issues = len(improvements)
+
+    good = 5 - issues
+
+    sizes = [good,issues]
+
+    labels = ["Good Areas","Needs Improvement"]
+
+    fig4,ax4 = plt.subplots()
+
+    ax4.pie(sizes,labels=labels,autopct="%1.1f%%")
+
+    ax4.set_title("Resume Readiness")
+
+    st.pyplot(fig4)
