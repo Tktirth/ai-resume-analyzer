@@ -13,7 +13,20 @@ st.title("AI Resume Analyzer")
 
 uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
 
-job_desc = st.text_area("Paste Job Description")
+JOB_DESCRIPTION = """
+We are hiring a Junior AI/ML Engineer.
+
+Required Skills:
+Python
+Machine Learning
+Deep Learning
+TensorFlow
+PyTorch
+Pandas
+Docker
+AWS
+Linux
+"""
 
 
 # -----------------------------------
