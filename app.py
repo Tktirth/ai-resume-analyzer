@@ -1,6 +1,5 @@
 import streamlit as st
 import pdfplumber
-import pandas as pd
 import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -16,6 +15,10 @@ uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
 
 job_desc = st.text_area("Paste Job Description")
 
+
+# -----------------------------------
+# Extract resume text
+# -----------------------------------
 
 def extract_text(pdf_file):
 
@@ -33,32 +36,55 @@ def extract_text(pdf_file):
     return text.lower()
 
 
+# -----------------------------------
+# Skill database
+# -----------------------------------
 
 skills_db = [
 
-"python","machine learning","deep learning","nlp","tensorflow","pytorch",
-"data analysis","sql","pandas","numpy","scikit learn",
-"cyber security","network security","linux",
-"docker","kubernetes","aws",
-"flask","fastapi",
-"data visualization","statistics","power bi","tableau"
+# programming
+"python","java","c++","javascript","sql",
+
+# ai/ml
+"machine learning","deep learning","nlp","tensorflow","pytorch","scikit learn",
+
+# data
+"data analysis","pandas","numpy","statistics","data visualization",
+
+# cybersecurity
+"cyber security","network security","ethical hacking","penetration testing",
+
+# cloud/devops
+"docker","kubernetes","aws","linux",
+
+# web
+"flask","fastapi","react","node",
+
+# tools
+"git","github","power bi","tableau"
 
 ]
 
 
+# -----------------------------------
+# Skill extraction
+# -----------------------------------
 
 def extract_skills(text):
 
-    skills_found = []
+    found = []
 
     for skill in skills_db:
 
         if skill in text:
-            skills_found.append(skill)
+            found.append(skill)
 
-    return skills_found
+    return found
 
 
+# -----------------------------------
+# Semantic ATS score
+# -----------------------------------
 
 def semantic_similarity(resume, jd):
 
@@ -71,14 +97,43 @@ def semantic_similarity(resume, jd):
     return round(similarity * 100)
 
 
+# -----------------------------------
+# Resume section analysis
+# -----------------------------------
+
+def section_analysis(resume_text):
+
+    sections = {
+
+        "Skills":"skills",
+        "Projects":"projects",
+        "Experience":"experience",
+        "Education":"education",
+        "Certifications":"certifications"
+
+    }
+
+    results = {}
+
+    for name, keyword in sections.items():
+
+        if keyword in resume_text:
+            results[name] = "Present"
+        else:
+            results[name] = "Missing"
+
+    return results
+
+
+# -----------------------------------
+# Main analysis
+# -----------------------------------
 
 if st.button("Analyze Resume"):
 
 
     if uploaded_file is None or job_desc == "":
-
         st.warning("Please upload resume and paste job description")
-
         st.stop()
 
 
@@ -103,35 +158,39 @@ if st.button("Analyze Resume"):
         ats_score = semantic_similarity(resume_text, jd_text)
 
 
-
     st.success("Analysis Complete")
 
+
+# -----------------------------------
+# Metrics
+# -----------------------------------
 
     col1, col2 = st.columns(2)
 
 
     with col1:
-
         st.metric("ATS Similarity Score", f"{ats_score}%")
 
 
     with col2:
-
         st.metric("Skills Matched", len(matched))
 
 
+# -----------------------------------
+# Skill results
+# -----------------------------------
 
     st.subheader("Matched Skills")
-
-    st.write(matched)
-
+    st.write(matched if matched else "No matching skills found")
 
 
     st.subheader("Missing Skills")
+    st.write(missing if missing else "No missing skills detected")
 
-    st.write(missing)
 
-
+# -----------------------------------
+# Resume suggestions
+# -----------------------------------
 
     st.subheader("Resume Suggestions")
 
@@ -158,43 +217,47 @@ if st.button("Analyze Resume"):
     if suggestions:
 
         for s in suggestions:
-
             st.write("•", s)
 
     else:
-
         st.write("Your resume is well aligned with the job role.")
 
 
+# -----------------------------------
+# Resume section analysis
+# -----------------------------------
 
-# -----------------------------
-# VISUAL ANALYTICS SECTION
-# -----------------------------
+    st.subheader("Resume Section Analysis")
 
+    sections = section_analysis(resume_text)
+
+    st.write(sections)
+
+
+# -----------------------------------
+# Skill gap bar chart
+# -----------------------------------
 
     st.subheader("Skill Gap Analysis")
 
-
     labels = ["Matched Skills", "Missing Skills"]
-
     values = [len(matched), len(missing)]
-
 
     fig, ax = plt.subplots()
 
     ax.bar(labels, values)
 
     ax.set_ylabel("Number of Skills")
-
     ax.set_title("Skill Match Analysis")
-
 
     st.pyplot(fig)
 
 
+# -----------------------------------
+# ATS score visualization
+# -----------------------------------
 
     st.subheader("ATS Score Visualization")
-
 
     fig2, ax2 = plt.subplots()
 
@@ -204,24 +267,47 @@ if st.button("Analyze Resume"):
 
     ax2.set_xlabel("Score Percentage")
 
-
     st.pyplot(fig2)
 
 
+# -----------------------------------
+# Resume coverage pie chart (safe)
+# -----------------------------------
 
     st.subheader("Resume Skill Coverage")
 
-
-    labels = ["Matched", "Missing"]
-
     sizes = [len(matched), len(missing)]
 
+    if sum(sizes) == 0:
 
-    fig3, ax3 = plt.subplots()
+        st.warning("No skills detected in resume or job description.")
 
-    ax3.pie(sizes, labels=labels, autopct="%1.1f%%")
+    else:
 
-    ax3.set_title("Resume Coverage vs Job Requirements")
+        labels = ["Matched", "Missing"]
+
+        fig3, ax3 = plt.subplots()
+
+        ax3.pie(sizes, labels=labels, autopct="%1.1f%%")
+
+        ax3.set_title("Resume Coverage vs Job Requirements")
+
+        st.pyplot(fig3)
 
 
-    st.pyplot(fig3)
+# -----------------------------------
+# Top skill recommendations
+# -----------------------------------
+
+    st.subheader("Recommended Skills to Add")
+
+    top_missing = missing[:5]
+
+    if top_missing:
+
+        for skill in top_missing:
+            st.write("•", skill)
+
+    else:
+
+        st.write("Your resume already covers the required skills.")
