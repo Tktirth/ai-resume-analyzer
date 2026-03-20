@@ -64,4 +64,7 @@ The project can be deployed using **Streamlit Cloud**.
 ## Author
 
 Tirth Kosambia
-IT Engineering Student | AI & Software Enthusiast
+IT Engineering Student | AI & Software & Cybersecurity Enthusiast
+
+## 📜 License
+This project is licensed under the MIT License.
